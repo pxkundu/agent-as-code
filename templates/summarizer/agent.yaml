@@ -1,0 +1,61 @@
+apiVersion: agent.dev/v1
+kind: Agent
+metadata:
+  name: document-summarizer
+  version: 1.0.0
+  description: Intelligent document summarization with multi-format support
+  author: Agent as Code Team
+  tags:
+    - summarization
+    - documents
+    - text-processing
+spec:
+  runtime: python
+  model:
+    provider: openai
+    name: gpt-4
+    config:
+      temperature: 0.3
+      max_tokens: 1000
+      top_p: 0.9
+  capabilities:
+    - document-summarization
+    - text-extraction
+    - multi-format-support
+    - key-points-extraction
+  dependencies:
+    - openai==1.0.0
+    - fastapi==0.104.0
+    - uvicorn==0.24.0
+    - pydantic==2.5.0
+    - PyPDF2==3.0.1
+    - python-docx==0.8.11
+    - python-multipart==0.0.6
+    - beautifulsoup4==4.12.0
+    - requests==2.31.0
+  environment:
+    - name: OPENAI_API_KEY
+      from: secret
+    - name: LOG_LEVEL
+      value: INFO
+    - name: MAX_FILE_SIZE
+      value: "10485760"
+    - name: SUPPORTED_FORMATS
+      value: pdf,docx,txt,html,md
+  ports:
+    - container: 8080
+      host: 8080
+      protocol: tcp
+  healthCheck:
+    command: ["curl", "-f", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    startPeriod: 5s
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi

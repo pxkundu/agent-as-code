@@ -1,0 +1,60 @@
+apiVersion: agent.dev/v1
+kind: Agent
+metadata:
+  name: chatbot
+  version: 1.0.0
+  description: Customer support chatbot with conversation memory and escalation handling
+  author: Agent as Code Team
+  tags:
+    - chatbot
+    - customer-support
+    - conversation
+spec:
+  runtime: python
+  model:
+    provider: openai
+    name: gpt-4
+    config:
+      temperature: 0.7
+      max_tokens: 500
+      top_p: 0.9
+  capabilities:
+    - conversation
+    - customer-support
+    - intent-classification
+    - escalation-handling
+  dependencies:
+    - openai==1.0.0
+    - fastapi==0.104.0
+    - uvicorn==0.24.0
+    - pydantic==2.5.0
+    - redis==5.0.0
+    - python-multipart==0.0.6
+  environment:
+    - name: OPENAI_API_KEY
+      from: secret
+    - name: REDIS_URL
+      value: redis://localhost:6379
+    - name: LOG_LEVEL
+      value: INFO
+    - name: MAX_CONVERSATION_HISTORY
+      value: "10"
+    - name: ESCALATION_KEYWORDS
+      value: human,manager,supervisor,escalate
+  ports:
+    - container: 8080
+      host: 8080
+      protocol: tcp
+  healthCheck:
+    command: ["curl", "-f", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    startPeriod: 5s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

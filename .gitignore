@@ -1,32 +1,93 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+# Go
+/bin/
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Code coverage profiles and other test artifacts
 *.out
-coverage.*
-*.coverprofile
-profile.cov
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
 go.work
-go.work.sum
 
-# env file
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 .env
+.venv
+venv/
+ENV/
+.pytest_cache/
 
-# Editor/IDE
-# .idea/
-# .vscode/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+/examples/**/agent.yaml
+/examples/**/Dockerfile.agent
+.agent_cache/
+*.log
+*.tmp
+/tools/binary-uploader/uploader
+/docs/_build/
+/coverage.txt
+/profile.out
+
+# Python build artifacts
+python/dist/
+python/build/
+python/*.egg-info/
+python/.pytest_cache/
+
+# Go build artifacts
+bin/
+
+# Note: cmd/ directory contains the main entry point and should be committed
+# Only ignore build artifacts, not source code
+
+# Virtual environments
+venv/
+test-env/
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Dependencies
+/vendor/
+node_modules/
+
+# Utility scripts
+get-pip.py

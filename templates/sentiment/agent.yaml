@@ -1,0 +1,59 @@
+apiVersion: agent.dev/v1
+kind: Agent
+metadata:
+  name: sentiment-analyzer
+  version: 1.0.0
+  description: High-performance sentiment analysis with emotion detection and batch processing
+  author: Agent as Code Team
+  tags:
+    - sentiment
+    - analysis
+    - emotion
+    - nlp
+spec:
+  runtime: python
+  model:
+    provider: openai
+    name: gpt-4
+    config:
+      temperature: 0.1
+      max_tokens: 150
+      top_p: 0.8
+  capabilities:
+    - sentiment-analysis
+    - emotion-detection
+    - batch-processing
+    - confidence-scoring
+  dependencies:
+    - openai==1.0.0
+    - fastapi==0.104.0
+    - uvicorn==0.24.0
+    - pydantic==2.5.0
+    - numpy==1.24.0
+    - pandas==2.0.0
+  environment:
+    - name: OPENAI_API_KEY
+      from: secret
+    - name: LOG_LEVEL
+      value: INFO
+    - name: BATCH_SIZE
+      value: "10"
+    - name: CACHE_RESULTS
+      value: "true"
+  ports:
+    - container: 8080
+      host: 8080
+      protocol: tcp
+  healthCheck:
+    command: ["curl", "-f", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    startPeriod: 5s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

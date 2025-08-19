@@ -1,0 +1,58 @@
+apiVersion: agent.dev/v1
+kind: Agent
+metadata:
+  name: language-translator
+  version: 1.0.0
+  description: Multi-language translation with context awareness and quality scoring
+  author: Agent as Code Team
+  tags:
+    - translation
+    - languages
+    - nlp
+spec:
+  runtime: python
+  model:
+    provider: openai
+    name: gpt-4
+    config:
+      temperature: 0.2
+      max_tokens: 2000
+      top_p: 0.9
+  capabilities:
+    - language-translation
+    - language-detection
+    - context-awareness
+    - quality-scoring
+  dependencies:
+    - openai==1.0.0
+    - fastapi==0.104.0
+    - uvicorn==0.24.0
+    - pydantic==2.5.0
+    - langdetect==1.0.9
+    - python-multipart==0.0.6
+  environment:
+    - name: OPENAI_API_KEY
+      from: secret
+    - name: LOG_LEVEL
+      value: INFO
+    - name: DEFAULT_TARGET_LANGUAGE
+      value: en
+    - name: SUPPORTED_LANGUAGES
+      value: en,es,fr,de,it,pt,ru,ja,ko,zh,ar,hi
+  ports:
+    - container: 8080
+      host: 8080
+      protocol: tcp
+  healthCheck:
+    command: ["curl", "-f", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    startPeriod: 5s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

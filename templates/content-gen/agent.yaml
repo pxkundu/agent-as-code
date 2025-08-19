@@ -1,0 +1,57 @@
+apiVersion: agent.dev/v1
+kind: Agent
+metadata:
+  name: content-generator
+  version: 1.0.0
+  description: AI-powered content generation for blogs, marketing, and social media
+  author: Agent as Code Team
+  tags:
+    - content-generation
+    - writing
+    - marketing
+spec:
+  runtime: python
+  model:
+    provider: openai
+    name: gpt-4
+    config:
+      temperature: 0.7
+      max_tokens: 2000
+      top_p: 0.9
+  capabilities:
+    - content-generation
+    - blog-writing
+    - social-media-content
+    - marketing-copy
+  dependencies:
+    - openai==1.0.0
+    - fastapi==0.104.0
+    - uvicorn==0.24.0
+    - pydantic==2.5.0
+    - python-multipart==0.0.6
+  environment:
+    - name: OPENAI_API_KEY
+      from: secret
+    - name: LOG_LEVEL
+      value: INFO
+    - name: DEFAULT_TONE
+      value: professional
+    - name: DEFAULT_LENGTH
+      value: medium
+  ports:
+    - container: 8080
+      host: 8080
+      protocol: tcp
+  healthCheck:
+    command: ["curl", "-f", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    startPeriod: 5s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
