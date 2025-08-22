@@ -31,8 +31,9 @@ Welcome to Agent-as-Code (AaC) - the "Docker for AI agents" that makes it easy t
 
 ### 📚 Getting Started
 1. [Quick Start Guide](./quickstart.md) - Get up and running in 5 minutes
-2. [Installation](./installation.md) - Multiple installation methods (Note: Create this file if needed, but assuming it exists or will be added)
-3. [Development Workflow](./development-workflow.md) - Step-by-step development process
+2. [Installation](./INSTALL.md) - Multiple installation methods for all platforms
+3. [Uninstallation](./UNINSTALL.md) - Complete removal and cleanup guide
+4. [Development Workflow](./development-workflow.md) - Step-by-step development process
 
 ### 🏗️ Core Concepts
 1. [Architecture Overview](./architecture.md) - Understanding AaC's design
@@ -72,11 +73,18 @@ Welcome to Agent-as-Code (AaC) - the "Docker for AI agents" that makes it easy t
 ### Installation
 
 ```bash
-# Using pip (recommended)
+# Method 1: Direct binary download (recommended)
+curl -L -o agent https://github.com/pxkundu/agent-as-code/releases/latest/download/agent-darwin-arm64
+chmod +x agent
+sudo mv agent /usr/local/bin/agent
+
+# Method 2: Using pip
 pip install agent-as-code
 
-# Using Homebrew
+# Method 3: Using Homebrew
 brew install agent-as-code
+
+# See [Installation Guide](./INSTALL.md) for all platforms and methods
 
 ## 🚀 **Binary Distribution System**
 
