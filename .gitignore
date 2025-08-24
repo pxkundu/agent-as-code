@@ -79,6 +79,7 @@ bin/
 # Virtual environments
 venv/
 test-env/
+test-package-env/
 
 # IDE and OS files
 .DS_Store
@@ -91,3 +92,46 @@ node_modules/
 
 # Utility scripts
 get-pip.py
+
+# Enhanced LLM Features - Generated Agents
+*-agent/
+*-agent-*/
+agent-*/
+!examples/*-agent/
+
+# Test and Build Artifacts
+*.test
+*.prof
+*.trace
+*.pprof
+*.memprof
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# Release Files
+RELEASE_*.md
+PACKAGE_TEST_REPORT.md
+
+# Docker and Container Files
+*.tar
+*.tar.gz
+*.dockerfile
+!Dockerfile
+!**/Dockerfile
+
+# Logs and Debug Files
+*.log
+*.debug
+*.trace
+debug/
+logs/
+
+# Cache Directories
+.cache/
+cache/
+.agent-cache/
