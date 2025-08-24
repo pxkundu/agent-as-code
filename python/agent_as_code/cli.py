@@ -340,6 +340,234 @@ class AgentCLI:
         
         return result.returncode == 0
 
+    # Enhanced LLM Commands
+    
+    def create_agent(self, use_case: str, model: Optional[str] = None, 
+                     optimize: bool = False, test: bool = False) -> bool:
+        """
+        Create an intelligent, fully functional AI agent optimized for a specific use case.
+        
+        This command uses LLM intelligence to:
+        - Generate optimized code based on the use case
+        - Create comprehensive test suites
+        - Set up proper error handling and logging
+        - Configure optimal model parameters
+        - Generate deployment configurations
+        - Create detailed documentation
+        
+        Args:
+            use_case: The use case for the agent (chatbot, sentiment-analyzer, etc.)
+            model: Optional specific model to use
+            optimize: Whether to optimize the model for the use case
+            test: Whether to run tests after creation
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "create-agent", use_case]
+        
+        if model:
+            args.extend(["--model", model])
+        if optimize:
+            args.append("--optimize")
+        if test:
+            args.append("--test")
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+    
+    def optimize_model(self, model: str, use_case: str) -> bool:
+        """
+        Optimize a local LLM model for a specific use case.
+        
+        This command analyzes the model and use case to:
+        - Adjust model parameters (temperature, top_p, etc.)
+        - Create custom prompts and system messages
+        - Optimize context window usage
+        - Generate performance benchmarks
+        - Create use case specific configurations
+        
+        Args:
+            model: The model to optimize
+            use_case: The use case to optimize for
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "optimize", model, use_case]
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+    
+    def benchmark_models(self, tasks: Optional[List[str]] = None, 
+                        output_format: Optional[str] = None) -> bool:
+        """
+        Run comprehensive benchmarks on all local LLM models.
+        
+        This command tests models across multiple dimensions:
+        - Response time and throughput
+        - Memory usage and efficiency
+        - Quality assessment for different tasks
+        - Cost-benefit analysis
+        - Performance recommendations
+        
+        Args:
+            tasks: Optional list of specific tasks to benchmark
+            output_format: Optional output format (json, table, etc.)
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "benchmark"]
+        
+        if tasks:
+            args.extend(["--tasks", ",".join(tasks)])
+        if output_format:
+            args.extend(["--output", output_format])
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+    
+    def deploy_agent(self, agent_name: str, test_suite: Optional[str] = None,
+                     monitor: bool = False) -> bool:
+        """
+        Deploy and comprehensively test an agent on your local machine.
+        
+        This command:
+        - Builds the agent container
+        - Deploys it locally
+        - Runs automated tests
+        - Validates functionality
+        - Provides performance metrics
+        - Generates deployment report
+        
+        Args:
+            agent_name: Name of the agent to deploy
+            test_suite: Optional test suite to run (basic, comprehensive)
+            monitor: Whether to enable monitoring
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "deploy-agent", agent_name]
+        
+        if test_suite:
+            args.extend(["--test-suite", test_suite])
+        if monitor:
+            args.append("--monitor")
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+    
+    def analyze_model(self, model: str, detailed: bool = False,
+                     capabilities: bool = False) -> bool:
+        """
+        Analyze a local LLM model's capabilities and limitations.
+        
+        This command provides deep insights into:
+        - Model architecture and parameters
+        - Performance characteristics
+        - Best use cases and limitations
+        - Optimization opportunities
+        - Integration recommendations
+        
+        Args:
+            model: The model to analyze
+            detailed: Whether to provide detailed analysis
+            capabilities: Whether to focus on capabilities
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "analyze", model]
+        
+        if detailed:
+            args.append("--detailed")
+        if capabilities:
+            args.append("--capabilities")
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+    
+    def list_models(self, quiet: bool = False) -> Union[bool, List[str]]:
+        """
+        List available local LLM models.
+        
+        Args:
+            quiet: Whether to only show model names
+            
+        Returns:
+            True if successful (when not quiet), or list of model names (when quiet).
+        """
+        args = ["llm", "list"]
+        
+        if quiet:
+            args.append("-q")
+        
+        result = self.run_command(args, capture_output=quiet)
+        
+        if quiet and result.returncode == 0:
+            return result.stdout.strip().split('\n') if result.stdout.strip() else []
+        
+        return result.returncode == 0
+    
+    def pull_model(self, model: str, quiet: bool = False) -> bool:
+        """
+        Pull a model from Ollama.
+        
+        Args:
+            model: The model to pull
+            quiet: Whether to suppress verbose output
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "pull", model]
+        
+        if quiet:
+            args.append("-q")
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+    
+    def test_model(self, model: str, input_text: Optional[str] = None) -> bool:
+        """
+        Test a local LLM model.
+        
+        Args:
+            model: The model to test
+            input_text: Optional input text for testing
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "test", model]
+        
+        if input_text:
+            args.extend(["--input", input_text])
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+    
+    def remove_model(self, model: str, force: bool = False) -> bool:
+        """
+        Remove a local LLM model.
+        
+        Args:
+            model: The model to remove
+            force: Whether to force removal without confirmation
+            
+        Returns:
+            True if successful, False otherwise.
+        """
+        args = ["llm", "remove", model]
+        
+        if force:
+            args.append("-f")
+        
+        result = self.run_command(args)
+        return result.returncode == 0
+
 
 def main():
     """

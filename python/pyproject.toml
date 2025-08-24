@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-as-code"
-version = "1.0.0"
-description = "Docker-like CLI for AI agents"
+version = "1.1.0"
+description = "Docker-like CLI for AI agents with Enhanced LLM Intelligence"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -31,7 +31,10 @@ requires-python = ">=3.8"
 dependencies = []
 keywords = [
     "ai", "agents", "cli", "docker", "containers", "llm", "machine-learning",
-    "artificial-intelligence", "automation", "microservices", "devops"
+    "artificial-intelligence", "automation", "microservices", "devops",
+    "ollama", "local-llm", "model-optimization", "agent-generation",
+    "intelligent-agents", "workflow-automation", "sentiment-analysis",
+    "chatbot", "code-assistant", "benchmarking", "model-analysis"
 ]
 
 [project.urls]

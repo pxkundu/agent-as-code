@@ -26,7 +26,7 @@ def get_version():
         for line in content.split('\n'):
             if line.startswith('__version__'):
                 return line.split('"')[1]
-    return "1.0.0"
+    return "1.1.0"
 
 # Platform-specific binary inclusion
 def get_package_data():
@@ -101,7 +101,10 @@ setup(
     },
     keywords=[
         "ai", "agents", "cli", "docker", "containers", "llm", "machine-learning",
-        "artificial-intelligence", "automation", "microservices", "devops"
+        "artificial-intelligence", "automation", "microservices", "devops",
+        "ollama", "local-llm", "model-optimization", "agent-generation",
+        "intelligent-agents", "workflow-automation", "sentiment-analysis",
+        "chatbot", "code-assistant", "benchmarking", "model-analysis"
     ],
     zip_safe=False,  # Required for binary files
     

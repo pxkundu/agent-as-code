@@ -1,0 +1,374 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-workflow-automation
+  namespace: workflow-automation
+  labels:
+    app: enterprise-workflow-automation
+    version: "1.0.0"
+    environment: production
+    team: platform-engineering
+    cost-center: IT-001
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: enterprise-workflow-automation
+  template:
+    metadata:
+      labels:
+        app: enterprise-workflow-automation
+        version: "1.0.0"
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        checksum/config: "${CONFIG_CHECKSUM}"
+    spec:
+      serviceAccountName: workflow-automation-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        supplementalGroups: [1000]
+      containers:
+      - name: workflow-automation
+        image: enterprise-workflow-agent:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: PORT
+          value: "8080"
+        - name: PROMETHEUS_PORT
+          value: "9090"
+        - name: TEAM_NAME
+          value: "platform-engineering"
+        - name: COST_CENTER
+          value: "IT-001"
+        - name: OLLAMA_BASE_URL
+          value: "http://ollama-service:11434"
+        - name: MODEL_NAME
+          value: "llama2:13b"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: workflow-automation-secrets
+              key: database-url
+        - name: REDIS_URL
+          value: "redis://redis-service:6379"
+        - name: KUBERNETES_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: workflow-automation-secrets
+              key: kubeconfig
+        - name: DOCKER_HOST
+          value: "unix:///var/run/docker.sock"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
+            ephemeral-storage: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: logs-volume
+          mountPath: /app/logs
+        - name: data-volume
+          mountPath: /app/data
+        - name: cache-volume
+          mountPath: /app/cache
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config-volume
+        configMap:
+          name: workflow-automation-config
+      - name: logs-volume
+        emptyDir:
+          sizeLimit: "1Gi"
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: workflow-automation-data
+      - name: cache-volume
+        emptyDir:
+          sizeLimit: "500Mi"
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - enterprise-workflow-automation
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/worker
+                operator: Exists
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "dedicated"
+        operator: "Equal"
+        value: "workflow-automation"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow-automation-service
+  namespace: workflow-automation
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: enterprise-workflow-automation
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: workflow-automation-sa
+  namespace: workflow-automation
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: workflow-automation-role
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "persistentvolumeclaims", "events", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles", "rolebindings"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: workflow-automation-rolebinding
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: workflow-automation-role
+subjects:
+- kind: ServiceAccount
+  name: workflow-automation-sa
+  namespace: workflow-automation
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: workflow-automation-hpa
+  namespace: workflow-automation
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: enterprise-workflow-automation
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workflow-automation-data
+  namespace: workflow-automation
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: gp3
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-automation-config
+  namespace: workflow-automation
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+data:
+  log-level: "INFO"
+  environment: "production"
+  team-name: "platform-engineering"
+  cost-center: "IT-001"
+  ollama-base-url: "http://ollama-service:11434"
+  model-name: "llama2:13b"
+  redis-url: "redis://redis-service:6379"
+  docker-host: "unix:///var/run/docker.sock"
+  prometheus-port: "9090"
+  health-check-interval: "30s"
+  health-check-timeout: "10s"
+  health-check-retries: "3"
+  startup-probe-delay: "60s"
+  startup-probe-period: "10s"
+  startup-probe-timeout: "5s"
+  startup-probe-failure-threshold: "30"
+  liveness-probe-delay: "30s"
+  liveness-probe-period: "30s"
+  liveness-probe-timeout: "10s"
+  liveness-probe-failure-threshold: "3"
+  readiness-probe-delay: "10s"
+  readiness-probe-period: "10s"
+  readiness-probe-timeout: "5s"
+  readiness-probe-failure-threshold: "3"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workflow-automation-secrets
+  namespace: workflow-automation
+  labels:
+    app: enterprise-workflow-automation
+    environment: production
+type: Opaque
+data:
+  # Base64 encoded values (replace with actual values)
+  database-url: "cG9zdGdyZXNxbDovLXVzZXJuYW1lOnBhc3N3b3JkQGhvc3Q6NTQzMi9kYXRhYmFzZQ=="
+  kubeconfig: "YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCmNsdXN0ZXJzOgotIG5hbWU6IGRlZmF1bHQKICBjbHVzdGVyOgogICAgc2VydmVyOiBodHRwczovL2t1YmVybmV0ZXMuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbAogICAgY2VydGlmaWNhdGUtYXV0aG9yaXR5OiBkYXRhOi8vY2VydC1hdXRob3JpdHkucGVtCmNvbnRleHRzOgotIG5hbWU6IGRlZmF1bHQKICBjb250ZXh0OgogICAgY2x1c3RlcjogZGVmYXVsdAogICAgdXNlcjogZGVmYXVsdAogICAgbmFtZXNwYWNlOiBkZWZhdWx0CmN1cnJlbnQtY29udGV4dDogZGVmYXVsdA=="
+  jwt-secret: "c3VwZXItc2VjcmV0LWp3dC1rZXktZm9yLXByb2R1Y3Rpb24="
+  encryption-key: "MzItY2hhci1lbmNyeXB0aW9uLWtleS1mb3ItcHJvZHVjdGlvbg=="
